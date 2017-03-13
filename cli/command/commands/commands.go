@@ -75,7 +75,7 @@ func AddCommands(cmd *cobra.Command, dockerCli *command.DockerCli) {
 		hide(container.NewAttachCommand(dockerCli)),
 		hide(container.NewCommitCommand(dockerCli)),
 		hide(container.NewCopyCommand(dockerCli)),
-		hide(container.NewReadmeCommand(dockerCli)),
+		//hide(container.NewReadmeCommand(dockerCli)),
 		hide(container.NewCreateCommand(dockerCli)),
 		hide(container.NewDiffCommand(dockerCli)),
 		hide(container.NewExecCommand(dockerCli)),
@@ -104,6 +104,7 @@ func AddCommands(cmd *cobra.Command, dockerCli *command.DockerCli) {
 		hide(image.NewRemoveCommand(dockerCli)),
 		hide(image.NewSaveCommand(dockerCli)),
 		hide(image.NewTagCommand(dockerCli)),
+		hide(image.NewReadmeCommand(dockerCli)),
 	)
 
 }
