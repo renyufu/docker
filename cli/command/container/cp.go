@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"archive/tar"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/cli"
@@ -116,7 +117,7 @@ func resolveLocalPath(localPath string) (absPath string, err error) {
 }
 
 func copyFromContainer(ctx context.Context, dockerCli *command.DockerCli, srcContainer, srcPath, dstPath string, cpParam *cpConfig) (err error) {
-	if dstPath != "-" {
+	if dstPath != "-" && dstPath != "-x" {
 		// Get an absolute destination path.
 		dstPath, err = resolveLocalPath(dstPath)
 		if err != nil {
@@ -155,6 +156,27 @@ func copyFromContainer(ctx context.Context, dockerCli *command.DockerCli, srcCon
 		_, err = io.Copy(os.Stdout, content)
 
 		return err
+	}
+
+	if dstPath == "-x" {
+		// Send the response to STDOUT.
+		tr := tar.NewReader(content)
+    	
+    		// Iterate through the files in the archive.
+    		for {
+    			_, err := tr.Next()
+    			if err == io.EOF {
+    				break
+    			}
+    			if err != nil {
+				return err
+    			}
+			if _, err := io.Copy(os.Stdout, tr); err != nil {
+				return err
+    			}
+    		}
+
+		return nil
 	}
 
 	// Prepare source copy info.

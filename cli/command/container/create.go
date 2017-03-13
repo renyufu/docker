@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+//"runtime/debug"
 
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"

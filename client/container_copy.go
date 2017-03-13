@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+//"runtime/debug"
 
 	"golang.org/x/net/context"
 
@@ -56,6 +57,7 @@ func (cli *Client) CopyToContainer(ctx context.Context, container, path string, 
 // CopyFromContainer gets the content from the container and returns it as a Reader
 // to manipulate it in the host. It's up to the caller to close the reader.
 func (cli *Client) CopyFromContainer(ctx context.Context, container, srcPath string) (io.ReadCloser, types.ContainerPathStat, error) {
+ //debug.PrintStack()
 	query := make(url.Values, 1)
 	query.Set("path", filepath.ToSlash(srcPath)) // Normalize the paths used in the API.
 
@@ -79,6 +81,7 @@ func (cli *Client) CopyFromContainer(ctx context.Context, container, srcPath str
 	if err != nil {
 		return nil, stat, fmt.Errorf("unable to get resource stat from response: %s", err)
 	}
+
 	return response.body, stat, err
 }
 
