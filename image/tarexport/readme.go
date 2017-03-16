@@ -21,107 +21,16 @@ import (
 	"github.com/pkg/errors"
 )
 
-type imageDescriptor struct {
-	refs   []reference.NamedTagged
-	layers []string
-}
-
-type saveSession struct {
-	*tarexporter
-	outDir      string
-	images      map[image.ID]*imageDescriptor
-	savedLayers map[string]struct{}
-	diffIDPaths map[layer.DiffID]string // cache every diffID blob to avoid duplicates
-}
-
-func (l *tarexporter) Save(names []string, outStream io.Writer) error {
+func (l *tarexporter) Readme(names []string, outStream io.Writer) error {
 	images, err := l.parseNames(names)
 	if err != nil {
 		return err
 	}
 
-	return (&saveSession{tarexporter: l, images: images}).save(outStream)
+	return (&saveSession{tarexporter: l, images: images}).readme(outStream)
 }
 
-func (l *tarexporter) parseNames(names []string) (map[image.ID]*imageDescriptor, error) {
-	imgDescr := make(map[image.ID]*imageDescriptor)
-
-	addAssoc := func(id image.ID, ref reference.Named) {
-		if _, ok := imgDescr[id]; !ok {
-			imgDescr[id] = &imageDescriptor{}
-		}
-
-		if ref != nil {
-			if _, ok := ref.(reference.Canonical); ok {
-				return
-			}
-			tagged, ok := reference.TagNameOnly(ref).(reference.NamedTagged)
-			if !ok {
-				return
-			}
-
-			for _, t := range imgDescr[id].refs {
-				if tagged.String() == t.String() {
-					return
-				}
-			}
-			imgDescr[id].refs = append(imgDescr[id].refs, tagged)
-		}
-	}
-
-	for _, name := range names {
-		ref, err := reference.ParseAnyReference(name)
-		if err != nil {
-			return nil, err
-		}
-		namedRef, ok := ref.(reference.Named)
-		if !ok {
-			// Check if digest ID reference
-			if digested, ok := ref.(reference.Digested); ok {
-				id := image.IDFromDigest(digested.Digest())
-				_, err := l.is.Get(id)
-				if err != nil {
-					return nil, err
-				}
-				addAssoc(id, nil)
-				continue
-			}
-			return nil, errors.Errorf("invalid reference: %v", name)
-		}
-
-		if reference.FamiliarName(namedRef) == string(digest.Canonical) {
-			imgID, err := l.is.Search(name)
-			if err != nil {
-				return nil, err
-			}
-			addAssoc(imgID, nil)
-			continue
-		}
-		if reference.IsNameOnly(namedRef) {
-			assocs := l.rs.ReferencesByName(namedRef)
-			for _, assoc := range assocs {
-				addAssoc(image.IDFromDigest(assoc.ID), assoc.Ref)
-			}
-			if len(assocs) == 0 {
-				imgID, err := l.is.Search(name)
-				if err != nil {
-					return nil, err
-				}
-				addAssoc(imgID, nil)
-			}
-			continue
-		}
-		id, err := l.rs.Get(namedRef)
-		if err != nil {
-			return nil, err
-		}
-		addAssoc(image.IDFromDigest(id), namedRef)
-
-	}
-	return imgDescr, nil
-}
-
-func (s *saveSession) save(outStream io.Writer) error {
+func (s *saveSession) readme(outStream io.Writer) error {
 	s.savedLayers = make(map[string]struct{})
 	s.diffIDPaths = make(map[layer.DiffID]string)
 
@@ -226,7 +135,7 @@ func (s *saveSession) save(outStream io.Writer) error {
 	return err
 }
 
-func (s *saveSession) saveImage(id image.ID) (map[layer.DiffID]distribution.Descriptor, error) {
+func (s *saveSession) readmeImage(id image.ID) (map[layer.DiffID]distribution.Descriptor, error) {
 	img, err := s.is.Get(id)
 	if err != nil {
 		return nil, err
@@ -286,7 +195,7 @@ func (s *saveSession) saveImage(id image.ID) (map[layer.DiffID]distribution.Desc
 	return foreignSrcs, nil
 }
 
-func (s *saveSession) saveLayer(id layer.ChainID, legacyImg image.V1Image, createdTime time.Time) (distribution.Descriptor, error) {
+func (s *saveSession) readmeLayer(id layer.ChainID, legacyImg image.V1Image, createdTime time.Time) (distribution.Descriptor, error) {
 	if _, exists := s.savedLayers[legacyImg.ID]; exists {
 		return distribution.Descriptor{}, nil
 	}

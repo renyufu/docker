@@ -82,7 +82,7 @@ type ImageAPIClient interface {
 	ImageRemove(ctx context.Context, image string, options types.ImageRemoveOptions) ([]types.ImageDeleteResponseItem, error)
 	ImageSearch(ctx context.Context, term string, options types.ImageSearchOptions) ([]registry.SearchResult, error)
 	ImageSave(ctx context.Context, images []string) (io.ReadCloser, error)
-	ImageReadme(ctx context.Context, images string) (io.ReadCloser, error)
+	ImageReadme(ctx context.Context, images []string) (io.ReadCloser, error)
 	ImageTag(ctx context.Context, image, ref string) error
 	ImagesPrune(ctx context.Context, pruneFilter filters.Args) (types.ImagesPruneReport, error)
 }

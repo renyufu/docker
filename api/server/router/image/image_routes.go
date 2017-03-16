@@ -342,3 +342,30 @@ func (s *imageRouter) postImagesPrune(ctx context.Context, w http.ResponseWriter
 	}
 	return httputils.WriteJSON(w, http.StatusOK, pruneReport)
 }
+
+func (s *imageRouter) getImagesReadme(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
+	if err := httputils.ParseForm(r); err != nil {
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/x-tar")
+
+	output := ioutils.NewWriteFlusher(w)
+	defer output.Close()
+	var names []string
+	if name, ok := vars["name"]; ok {
+		names = []string{name}
+	} else {
+		names = r.Form["names"]
+	}
+
+	if err := s.backend.ReadmeImage(names, output); err != nil {
+	//if err := s.backend.ExportImage(names, output); err != nil {
+		if !output.Flushed() {
+			return err
+		}
+		sf := streamformatter.NewJSONStreamFormatter()
+		output.Write(sf.FormatError(err))
+	}
+	return nil
+}
