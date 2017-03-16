@@ -40,6 +40,7 @@ func NewContainerCommand(dockerCli *command.DockerCli) *cobra.Command {
 		newListCommand(dockerCli),
 		newInspectCommand(dockerCli),
 		NewPruneCommand(dockerCli),
+		NewReadmeCommand(dockerCli),
 	)
 	return cmd
 }
