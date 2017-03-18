@@ -131,6 +131,7 @@ type Exporter interface {
 	Load(io.ReadCloser, io.Writer, bool) error
 	// TODO: Load(net.Context, io.ReadCloser, <- chan StatusMessage) error
 	Save([]string, io.Writer) error
+	Readme(names []string, outStream io.Writer) error
 }
 
 // NewFromJSON creates an Image configuration from json.
